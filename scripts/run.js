@@ -1,12 +1,27 @@
 const hre = require("hardhat");
 
 async function main() {
-  const Greeter = await hre.ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
 
-  await greeter.deployed();
+  const [deployer, bob, jane] = await hre.ethers.getSigners();
 
-  console.log("Greeter deployed to:", greeter.address);
+  const Wm = await hre.ethers.getContractFactory("WagerManager");
+  const wm = await Wm.deploy();
+
+  await wm.deployed();
+
+  console.log("Wager Manager deployed to:", wm.address);
+
+
+  const nicknameTxn = await wm.connect(bob).setNickname("BoobaThaDestroyer");
+  await nicknameTxn.wait();
+
+  console.log("Bob nickname:", await wm.getNickname(bob.address));
+
+  const nicknameTxn1 = await wm.connect(jane).setNickname("Janestarr");
+  await nicknameTxn1.wait();
+
+  console.log("Jane nickname:", await wm.getNickname(jane.address));
+
 }
 
 main()
