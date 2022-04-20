@@ -12,15 +12,23 @@ async function main() {
   console.log("Wager Manager deployed to:", wm.address);
 
 
-  const nicknameTxn = await wm.connect(bob).setNickname("BoobaThaDestroyer");
+  const nicknameTxn = await wm.connect(bob).setNickname("BobThaDestroyer");
   await nicknameTxn.wait();
 
   console.log("Bob nickname:", await wm.getNickname(bob.address));
 
-  const nicknameTxn1 = await wm.connect(jane).setNickname("Janestarr");
+  const nicknameTxn1 = await wm.connect(jane).setNickname("JanestarrXX");
   await nicknameTxn1.wait();
 
   console.log("Jane nickname:", await wm.getNickname(jane.address));
+
+  await wm.connect(bob).createWager(
+    jane.address, 
+    ethers.utils.parseUnits("100.0"), 
+    "Dry u out at COD"
+  );
+
+  console.log("Bob's wagers", await wm.connect(bob).getWagers());
 
 }
 
