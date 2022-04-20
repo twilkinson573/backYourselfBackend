@@ -20,6 +20,7 @@ contract WagerManager is Ownable {
     uint8 address0Verdict; // 0 == no verdict given yet, 1 == 'I lost' verdict, 2 == 'I won' verdict
     uint8 address1Verdict;
     uint wagerSize;
+    uint wagerId;
   }
 
   // Mapping from user to list of the wager id's they are involved in
@@ -53,7 +54,8 @@ contract WagerManager is Ownable {
       0,
       0,
       0,
-      _wagerSize
+      _wagerSize,
+      _wagerIds.current()
     );
 
     // add to _userWagers for both users, & _allWagers
@@ -80,11 +82,16 @@ contract WagerManager is Ownable {
   }
 
 
-  function provideWagerResponse(uint _wagerId, uint _response) public {
-    Wager memory _wager = _getWager(_wagerId);
+  function provideWagerResponse(uint _wagerId, uint8 _response) public {
+    Wager storage _wager = _allWagers[_wagerId];
+    require(_response == 1 || _response == 2, "Forbidden Response");
 
-    // take required money if accepted
-    // update wager with the response
+    if (_response == 2) {
+      require(IERC20(_wantToken).allowance(msg.sender, address(this)) >= _wager.wagerSize, "Insufficient allowance");
+      require(IERC20(_wantToken).transferFrom(msg.sender, address(this), _wager.wagerSize), "Transfer failed");
+    }
+
+    _wager.status = _response;
   }
 
   function provideWagerVerdict(uint _wagerId, uint _verdict) public {

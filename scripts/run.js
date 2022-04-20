@@ -45,8 +45,12 @@ async function main() {
     "Blitz u in Fifa 1v1"
   );
 
+  await wm.connect(bob).provideWagerResponse(1, 2);
+  await wm.connect(jane).provideWagerResponse(0, 1);
+
   console.log("Bob's wagers:", await wm.connect(bob).getWagers());
   console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
+  console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
 
 }
 
