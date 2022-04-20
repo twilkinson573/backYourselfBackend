@@ -4,10 +4,13 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract WagerManager is Ownable {
   using Counters for Counters.Counter;
   Counters.Counter private _wagerIds;
+
+  address _wantToken;
 
   struct Wager {
     string description;
@@ -28,7 +31,9 @@ contract WagerManager is Ownable {
   // Mapping of addresses to human-friendly nicknames
   mapping(address => string) private _playerNicknames;
 
-  constructor() {}
+  constructor(address _initialWantToken) {
+    _wantToken = _initialWantToken; // the token we will accept as stakes - ie. USDC
+  }
 
   // WAGERS ===================================================================
   
@@ -36,11 +41,9 @@ contract WagerManager is Ownable {
     address _opponent, 
     uint _wagerSize, 
     string calldata _description
-  ) external payable {
-    // take money
-
-    // require transfer of USDC for correct amount to be successful
-    // require(IERC20...)
+  ) external {
+    require(IERC20(_wantToken).allowance(msg.sender, address(this)) >= _wagerSize, "Insufficient allowance");
+    require(IERC20(_wantToken).transferFrom(msg.sender, address(this), _wagerSize), "Transfer failed");
 
     // create wager
     Wager memory _newWager = Wager(
@@ -63,14 +66,13 @@ contract WagerManager is Ownable {
   }
 
   function getWagers() public view returns(Wager[] memory) {
-    Wager[] memory _myWagers = new Wager[](_userWagers[msg.sender].length);
+    Wager[] memory _wagers = new Wager[](_userWagers[msg.sender].length);
 
-    for (uint i=0; i < _myWagers.length; i++) {
-      _myWagers[i] = _getWager(_userWagers[msg.sender][i]);
-      // _myWagers[i] = (_allWagers[_userWagers[msg.sender][i]]);
+    for (uint i=0; i < _wagers.length; i++) {
+      _wagers[i] = _getWager(_userWagers[msg.sender][i]);
     }
 
-    return _myWagers;
+    return _wagers;
   }
 
   function _getWager(uint _wagerId) internal view returns(Wager memory) {
@@ -78,14 +80,16 @@ contract WagerManager is Ownable {
   }
 
 
-  function provideWagerResponse(uint _response) public {
-    // find correct wager
+  function provideWagerResponse(uint _wagerId, uint _response) public {
+    Wager memory _wager = _getWager(_wagerId);
+
     // take required money if accepted
     // update wager with the response
   }
 
-  function provideWagerVerdict(uint _verdict) public {
-    // find correct wager
+  function provideWagerVerdict(uint _wagerId, uint _verdict) public {
+    // Wager memory _wager = _getWager(_wagerId);
+
     // update it with the verdict
     // if both verdicts present, pay out the wager accordingly
   }
