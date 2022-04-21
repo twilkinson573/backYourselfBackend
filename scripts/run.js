@@ -33,12 +33,14 @@ async function main() {
 
   // CREATE WAGERS ============================================================
 
+  // WAGER 0
   await wm.connect(bob).createWager(
     jane.address, 
     ethers.utils.parseUnits("100.0"), 
     "Dry u out at COD"
   );
 
+  // WAGER 1
   await wm.connect(jane).createWager(
     bob.address, 
     ethers.utils.parseUnits("50.0"), 
@@ -46,12 +48,26 @@ async function main() {
   );
 
   await wm.connect(bob).provideWagerResponse(1, 2);
-  await wm.connect(jane).provideWagerResponse(0, 1);
+  await wm.connect(jane).provideWagerResponse(0, 2);
 
   console.log("Bob's wagers:", await wm.connect(bob).getWagers());
   console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
   console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
+  console.log("Deployer USDC balance:", await usdc.balanceOf(deployer.address));
 
+  // WAGER 0 - Disputed, platform takes stake
+  await wm.connect(bob).provideWagerVerdict(0, 2);
+  await wm.connect(jane).provideWagerVerdict(0, 2);
+
+  // WAGER 1 - Bob wins, platform takes 1%
+  await wm.connect(bob).provideWagerVerdict(1, 2);
+  await wm.connect(jane).provideWagerVerdict(1, 1);
+
+
+  console.log("Bob's wagers:", await wm.connect(bob).getWagers());
+  console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
+  console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
+  console.log("Deployer USDC balance:", await usdc.balanceOf(deployer.address));
 }
 
 main()

@@ -11,12 +11,13 @@ contract WagerManager is Ownable {
   Counters.Counter private _wagerIds;
 
   address _wantToken;
+  address _deployer;
 
   struct Wager {
     string description;
     address address0;
     address address1;
-    uint8 status;          // 0 == 'proposed', 1 == 'denied', 2 == 'active'
+    uint8 status;          // 0 == 'proposed', 1 == 'denied', 2 == 'active', 3 = 'complete'
     uint8 address0Verdict; // 0 == no verdict given yet, 1 == 'I lost' verdict, 2 == 'I won' verdict
     uint8 address1Verdict;
     uint wagerSize;
@@ -34,6 +35,7 @@ contract WagerManager is Ownable {
 
   constructor(address _initialWantToken) {
     _wantToken = _initialWantToken; // the token we will accept as stakes - ie. USDC
+    _deployer = msg.sender;
   }
 
   // WAGERS ===================================================================
@@ -84,6 +86,8 @@ contract WagerManager is Ownable {
 
   function provideWagerResponse(uint _wagerId, uint8 _response) public {
     Wager storage _wager = _allWagers[_wagerId];
+    require(_wager.address1 == msg.sender, "Forbidden Responder");
+    require(_wager.status == 0, "Response already recorded");
     require(_response == 1 || _response == 2, "Forbidden Response");
 
     if (_response == 2) {
@@ -92,13 +96,39 @@ contract WagerManager is Ownable {
     }
 
     _wager.status = _response;
+
+    // TODO if wager is declined, return the money to the original proposer address
   }
 
-  function provideWagerVerdict(uint _wagerId, uint _verdict) public {
-    // Wager memory _wager = _getWager(_wagerId);
+  function provideWagerVerdict(uint _wagerId, uint8 _verdict) public {
+    Wager storage _wager = _allWagers[_wagerId];
+    require(_wager.address0 == msg.sender || _wager.address1 == msg.sender, "Forbidden Responder");
 
-    // update it with the verdict
-    // if both verdicts present, pay out the wager accordingly
+    if (_wager.address0 == msg.sender) {
+      require(_wager.address0Verdict == 0, "Verdict already recorded");
+      _wager.address0Verdict = _verdict;
+
+    } else {
+      require(_wager.address1Verdict == 0, "Verdict already recorded");
+      _wager.address1Verdict = _verdict;
+
+    }
+
+    // if both verdicts are present, pay out the wager accordingly
+    if (_wager.address0Verdict != 0 && _wager.address1Verdict != 0) {
+      _wager.status = 3;
+
+      if (_wager.address0Verdict == _wager.address1Verdict) {
+        // disputed verdict, platform takes 100% of the wager stakes as punishment
+        require(IERC20(_wantToken).transfer(_deployer, _wager.wagerSize * 2), "Transfer failed");
+
+      } else {
+        // winner agreed - pay out winner minus a small fee
+        require(IERC20(_wantToken).transfer(_wager.address0Verdict == 2 ? _wager.address0 : _wager.address1, _wager.wagerSize*2 - _wager.wagerSize/100), "Payout transfer failed");
+        require(IERC20(_wantToken).transfer(_deployer, _wager.wagerSize / 100), "Fee transfer failed");
+      }
+    }
+
   }
 
 
