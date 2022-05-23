@@ -5,16 +5,23 @@ async function main() {
   // SETUP ====================================================================
 
   const [deployer, bob, jane] = await hre.ethers.getSigners();
+  const frontendUser = "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199";
+  console.log("Deployer address:", deployer.address);
+  console.log("Bob address:", bob.address);
+  console.log("Jane address:", jane.address);
 
   const Usdc = await hre.ethers.getContractFactory("ERC20Mock");
   const usdc = await Usdc.deploy("USDC", "USDC", ethers.utils.parseUnits("1000000"));
+  console.log("USDC address", usdc.address);
 
   await usdc.transfer(bob.address, ethers.utils.parseUnits("1000"));
   await usdc.transfer(jane.address, ethers.utils.parseUnits("1000"));
+  await usdc.connect(jane).transfer(frontendUser, ethers.utils.parseUnits("100"));
 
   const Wm = await hre.ethers.getContractFactory("WagerManager");
   const wm = await Wm.deploy(usdc.address);
   await wm.deployed();
+  console.log("Wager Manager deployed at:", wm.address);
 
   await usdc.connect(bob).approve(wm.address, ethers.utils.parseUnits("1000000"));
   await usdc.connect(jane).approve(wm.address, ethers.utils.parseUnits("1000000"));

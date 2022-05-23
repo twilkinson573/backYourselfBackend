@@ -10,7 +10,7 @@ contract WagerManager is Ownable {
   using Counters for Counters.Counter;
   Counters.Counter private _wagerIds;
 
-  address _wantToken;
+  address public wantToken;
   address _deployer;
 
   struct Wager {
@@ -34,7 +34,7 @@ contract WagerManager is Ownable {
   mapping(address => string) private _playerNicknames;
 
   constructor(address _initialWantToken) {
-    _wantToken = _initialWantToken; // the token we will accept as stakes - ie. USDC
+    wantToken = _initialWantToken; // the token we will accept as stakes - ie. USDC
     _deployer = msg.sender;
   }
 
@@ -45,8 +45,8 @@ contract WagerManager is Ownable {
     uint _wagerSize, 
     string calldata _description
   ) external {
-    require(IERC20(_wantToken).allowance(msg.sender, address(this)) >= _wagerSize, "Insufficient allowance");
-    require(IERC20(_wantToken).transferFrom(msg.sender, address(this), _wagerSize), "Transfer failed");
+    require(IERC20(wantToken).allowance(msg.sender, address(this)) >= _wagerSize, "Insufficient allowance");
+    require(IERC20(wantToken).transferFrom(msg.sender, address(this), _wagerSize), "Transfer failed");
 
     // create wager
     Wager memory _newWager = Wager(
@@ -91,10 +91,10 @@ contract WagerManager is Ownable {
     require(_response == 1 || _response == 2, "Forbidden Response");
 
     if (_response == 2) {
-      require(IERC20(_wantToken).allowance(msg.sender, address(this)) >= _wager.wagerSize, "Insufficient allowance");
-      require(IERC20(_wantToken).transferFrom(msg.sender, address(this), _wager.wagerSize), "Match stake transfer failed");
+      require(IERC20(wantToken).allowance(msg.sender, address(this)) >= _wager.wagerSize, "Insufficient allowance");
+      require(IERC20(wantToken).transferFrom(msg.sender, address(this), _wager.wagerSize), "Match stake transfer failed");
     } else {
-      require(IERC20(_wantToken).transfer(_wager.address0, _wager.wagerSize), "Return stake transfer failed");
+      require(IERC20(wantToken).transfer(_wager.address0, _wager.wagerSize), "Return stake transfer failed");
     }
 
     _wager.status = _response;
@@ -120,12 +120,13 @@ contract WagerManager is Ownable {
 
       if (_wager.address0Verdict == _wager.address1Verdict) {
         // disputed verdict, platform takes 100% of the wager stakes as punishment
-        require(IERC20(_wantToken).transfer(_deployer, _wager.wagerSize * 2), "Fee transfer failed");
+        require(IERC20(wantToken).transfer(_deployer, _wager.wagerSize * 2), "Fee transfer failed");
 
       } else {
         // winner agreed - pay out winner minus a small fee
-        require(IERC20(_wantToken).transfer(_wager.address0Verdict == 2 ? _wager.address0 : _wager.address1, _wager.wagerSize*2 - _wager.wagerSize/100), "Payout transfer failed");
-        require(IERC20(_wantToken).transfer(_deployer, _wager.wagerSize / 100), "Fee transfer failed");
+        require(IERC20(wantToken).transfer(_wager.address0Verdict == 2 ? _wager.address0 : _wager.address1, _wager.wagerSize*2 - _wager.wagerSize/100), "Payout transfer failed");
+        require(IERC20(wantToken).transfer(_deployer, _wager.wagerSize / 100), "Fee transfer failed");
+        
       }
     }
 
