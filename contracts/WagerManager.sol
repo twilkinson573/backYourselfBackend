@@ -11,13 +11,13 @@ contract WagerManager is Ownable {
   Counters.Counter private _wagerIds;
 
   address public wantToken;
-  address _deployer;
+  address private _deployer;
 
   struct Wager {
     string description;
     address address0;
     address address1;
-    uint8 status;          // 0 == 'proposed', 1 == 'denied', 2 == 'active', 3 = 'complete'
+    uint8 status;          // 0 == 'proposed', 1 == 'declined', 2 == 'active', 3 = 'complete'
     uint8 address0Verdict; // 0 == no verdict given yet, 1 == 'I lost' verdict, 2 == 'I won' verdict
     uint8 address1Verdict;
     uint wagerSize;
@@ -32,6 +32,14 @@ contract WagerManager is Ownable {
 
   // Mapping of addresses to human-friendly nicknames
   mapping(address => string) private _playerNicknames;
+
+  event wagerCreated(
+    address indexed address0,
+    address indexed address1,
+    uint wagerSize,
+    string description,
+    uint wagerId
+  );
 
   constructor(address _initialWantToken) {
     wantToken = _initialWantToken; // the token we will accept as stakes - ie. USDC
@@ -65,6 +73,8 @@ contract WagerManager is Ownable {
     _userWagers[_opponent].push(_wagerIds.current());
 
     _allWagers[_wagerIds.current()] = _newWager;
+
+    emit wagerCreated(msg.sender, _opponent, _wagerSize, _description, _wagerIds.current());
 
     _wagerIds.increment();
   }
@@ -103,6 +113,7 @@ contract WagerManager is Ownable {
   function provideWagerVerdict(uint _wagerId, uint8 _verdict) public {
     Wager storage _wager = _allWagers[_wagerId];
     require(_wager.address0 == msg.sender || _wager.address1 == msg.sender, "Forbidden Responder");
+    require(_verdict == 1 || _verdict == 2, "Forbidden Verdict");
 
     if (_wager.address0 == msg.sender) {
       require(_wager.address0Verdict == 0, "Verdict already recorded");

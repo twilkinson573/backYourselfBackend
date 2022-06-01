@@ -14,9 +14,9 @@ async function main() {
   const usdc = await Usdc.deploy("USDC", "USDC", ethers.utils.parseUnits("1000000"));
   console.log("USDC address", usdc.address);
 
-  await usdc.transfer(bob.address, ethers.utils.parseUnits("1000"));
-  await usdc.transfer(jane.address, ethers.utils.parseUnits("1000"));
-  await usdc.connect(jane).transfer(frontendUser, ethers.utils.parseUnits("100"));
+  await usdc.transfer(bob.address, ethers.utils.parseUnits("10000"));
+  await usdc.transfer(jane.address, ethers.utils.parseUnits("10000"));
+  await usdc.connect(jane).transfer(frontendUser, ethers.utils.parseUnits("1000"));
 
   const Wm = await hre.ethers.getContractFactory("WagerManager");
   const wm = await Wm.deploy(usdc.address);
@@ -61,14 +61,32 @@ async function main() {
     "Big stakes pistol duel irl at sunrise"
   );
 
+  // WAGER 3,4,5,6 - F/E User
+  await wm.connect(bob).createWager(
+    frontendUser, 
+    ethers.utils.parseUnits("25.0"), 
+    "3rd Person Mode Snipers Only in Rust"
+  );
+  await wm.connect(bob).createWager(
+    frontendUser, 
+    ethers.utils.parseUnits("8.0"), 
+    "I can do more kickups than you"
+  );
+  await wm.connect(bob).createWager(
+    frontendUser, 
+    ethers.utils.parseUnits("40.0"), 
+    "Who can drive the farthest on the range?"
+  );
+
+
   await wm.connect(jane).provideWagerResponse(0, 2);
   await wm.connect(bob).provideWagerResponse(1, 2);
   await wm.connect(jane).provideWagerResponse(2, 1);
 
-  console.log("Bob's wagers:", await wm.connect(bob).getWagers());
-  console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
-  console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
-  console.log("Deployer USDC balance:", await usdc.balanceOf(deployer.address));
+  // console.log("Bob's wagers:", await wm.connect(bob).getWagers());
+  // console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
+  // console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
+  // console.log("Deployer USDC balance:", await usdc.balanceOf(deployer.address));
 
   // WAGER 0 - Disputed, platform takes stake
   await wm.connect(bob).provideWagerVerdict(0, 2);
@@ -79,10 +97,10 @@ async function main() {
   await wm.connect(jane).provideWagerVerdict(1, 1);
 
 
-  console.log("Bob's wagers:", await wm.connect(bob).getWagers());
-  console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
-  console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
-  console.log("Deployer USDC balance:", await usdc.balanceOf(deployer.address));
+  // console.log("Bob's wagers:", await wm.connect(bob).getWagers());
+  // console.log("Bob USDC balance:", await usdc.balanceOf(bob.address));
+  // console.log("Jane USDC balance:", await usdc.balanceOf(jane.address));
+  // console.log("Deployer USDC balance:", await usdc.balanceOf(deployer.address));
 }
 
 main()
