@@ -1,14 +1,8 @@
 const hre = require("hardhat");
 
 async function main() {
-  const [deployer, bob, jane] = await hre.ethers.getSigners();
-
-  const Usdc = await hre.ethers.getContractFactory("ERC20Mock");
-  const usdc = await Usdc.deploy("USDC", "USDC", ethers.utils.parseUnits("1000000"));
-
-  await usdc.transfer(bob.address, ethers.utils.parseUnits("1000"));
-  await usdc.transfer(jane.address, ethers.utils.parseUnits("1000"));
-
+  const [deployer] = await hre.ethers.getSigners();
+  
   const Wm = await hre.ethers.getContractFactory("WagerManager");
   const wm = await Wm.deploy(usdc.address);
   await wm.deployed();

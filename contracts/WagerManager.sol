@@ -33,7 +33,7 @@ contract WagerManager is Ownable {
   // Mapping of addresses to human-friendly nicknames
   mapping(address => string) private _playerNicknames;
 
-  event wagerCreated(
+  event WagerCreated(
     address indexed address0,
     address indexed address1,
     uint wagerSize,
@@ -74,12 +74,12 @@ contract WagerManager is Ownable {
 
     _allWagers[_wagerIds.current()] = _newWager;
 
-    emit wagerCreated(msg.sender, _opponent, _wagerSize, _description, _wagerIds.current());
+    emit WagerCreated(msg.sender, _opponent, _wagerSize, _description, _wagerIds.current());
 
     _wagerIds.increment();
   }
 
-  function getWagers() public view returns(Wager[] memory) {
+  function getWagers() external view returns(Wager[] memory) {
     Wager[] memory _wagers = new Wager[](_userWagers[msg.sender].length);
 
     for (uint i=0; i < _wagers.length; i++) {
@@ -94,7 +94,7 @@ contract WagerManager is Ownable {
   }
 
 
-  function provideWagerResponse(uint _wagerId, uint8 _response) public {
+  function provideWagerResponse(uint _wagerId, uint8 _response) external {
     Wager storage _wager = _allWagers[_wagerId];
     require(_wager.address1 == msg.sender, "Forbidden Responder");
     require(_wager.status == 0, "Response already recorded");
@@ -110,7 +110,7 @@ contract WagerManager is Ownable {
     _wager.status = _response;
   }
 
-  function provideWagerVerdict(uint _wagerId, uint8 _verdict) public {
+  function provideWagerVerdict(uint _wagerId, uint8 _verdict) external {
     Wager storage _wager = _allWagers[_wagerId];
     require(_wager.address0 == msg.sender || _wager.address1 == msg.sender, "Forbidden Responder");
     require(_verdict == 1 || _verdict == 2, "Forbidden Verdict");
@@ -150,7 +150,7 @@ contract WagerManager is Ownable {
     _playerNicknames[msg.sender] = _nickname;
   }
 
-  function getNickname(address _selectedAddress) public view returns (string memory) {
+  function getNickname(address _selectedAddress) external view returns (string memory) {
     return _playerNicknames[_selectedAddress];
   }
 
